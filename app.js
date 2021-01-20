@@ -14,7 +14,10 @@ const requestHandler = function(request, response) {
 };
 
 const server = http.createServer(requestHandler);
+console.log('Server created'); // NEW LINE
 
 server.listen(PORT, () => {
   console.log(`Server listening on: http://localhost:${PORT}`);
 });
+
+console.log('Last line (after .listen call)'); // NEW LINE
