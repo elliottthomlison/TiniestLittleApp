@@ -2,8 +2,14 @@ const { response } = require("express");
 const express = require("express");
 const app = express();
 const PORT = 8080;
+const bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser')
+
+app.use(cookieParser())
 
 app.set("view engine", "ejs"); //This tells the Express app to use EJS as its templating engine. 
+
+app.use(bodyParser.urlencoded({ extended: true }));
 
 function generateRandomString() {
   Math.random().toString(36).substring(2, 8);
@@ -13,6 +19,7 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -31,7 +38,30 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  //we will try to read the cookie and then set the display of the username.$
+  let templateVars;
+  if(req.cookies){
+    if(req.cookies["username"]){
+      templateVars = {
+        username: req.cookies["username"],
+        urls: urlDatabase
+      
+      };
+    } else{
+        templateVars = {
+          username: null,
+          urls: urlDatabase
+        
+        };
+    }
+  } else{
+    templateVars = {
+      username: null,
+      urls: urlDatabase
+    }
+  }
+  console.log("TEST ");
+  console.log(templateVars);
   res.render("urls_index", templateVars);
 });
 
@@ -44,10 +74,16 @@ app.get("/elliott/:parameter", (req, res) => {
   res.send("Hey dude " + text);
 });
 
-// app.get("/urls/:shortURL", (req, res) => {
-//   const templateVars = { shortURL: req.params.shortURL, longURL: /* What goes here? */ };
-//   res.render("urls_show", templateVars);
-// });
+app.post("/login", (req, res) => { 
+  console.log("we are in the LOGIN POST");
+  const username = req.body.username;
+  console.log(username);
+  res.cookie("username", username);
+  res.redirect('/urls');
+});
+
+//^^^will always be req,res + look for patterns + "username is the name of the cookie"
+//we need to do a redirect because we need to go somewhere and /urls is the only place we can go
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
@@ -59,7 +95,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`); // Respond with 'Ok' (we will replace this) (redirect requires a string)
 });
 
-app.post('/urls/:shortURL/delete',(req, res)=>{
+app.post('/urls/:shortURL/delete',(req, res)=>{ 
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
 });
