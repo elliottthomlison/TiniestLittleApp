@@ -1,3 +1,16 @@
+const users = { 
+  "userRandomID": {
+    id: "onedayitwillmakesense", 
+    email: "lost@everyday.com", 
+    password: "123"
+  },
+ "user2RandomID": {
+    id: "killmenow", 
+    email: "deathbythesword@fml.com", 
+    password: "123"
+  }
+}
+
 const { response } = require("express");
 const express = require("express");
 const app = express();
@@ -19,7 +32,6 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
-
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -74,6 +86,39 @@ app.get("/elliott/:parameter", (req, res) => {
   res.send("Hey dude " + text);
 });
 
+//this is doing something with the user's on the registration page
+app.get("/register", (req, res) => {
+  const submittedEmail = req.body.email;
+  const submittedPassword = req.body.password;
+
+  if (submittedEmail || submittedPassword === ""){
+    res.status(400.send("That email and/or password cannot be found");
+  } DO I INCLUDE THE CONDITIONS OF THE PASSWORD/USERNAME BEING IN USE HERE? >_<
+  
+  
+  if(email || password === ""){
+    return with the 400 status code???
+  }
+
+  if const users email already in use return 400 status code
+  code dry? => don't repeat yourself
+
+  const templateVars = {
+    user: null
+  };
+  res.render("register", templateVars);
+});
+
+//this will render the registration page
+app.get("/register", (req, res) => {
+  const templateVars = {username:""}
+  res.render("urls_reg", templateVars);
+});
+
+//res.render => goes through the server file and shows on the brower
+//res.redirect => sends me to anotehr git request
+//get => menu/show something to the user | post => ordering food/gathering data from the user 
+
 app.post("/login", (req, res) => { 
   console.log("we are in the LOGIN POST");
   const username = req.body.username;
@@ -84,6 +129,7 @@ app.post("/login", (req, res) => {
 
 //^^^will always be req,res + look for patterns + "username is the name of the cookie"
 //we need to do a redirect because we need to go somewhere and /urls is the only place we can go
+//
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
