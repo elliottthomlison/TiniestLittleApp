@@ -1,149 +1,198 @@
-const users = { 
-  "userRandomID": {
-    id: "onedayitwillmakesense", 
-    email: "lost@everyday.com", 
-    password: "123"
-  },
- "user2RandomID": {
-    id: "killmenow", 
-    email: "deathbythesword@fml.com", 
-    password: "123"
-  }
-}
 
-const { response } = require("express");
-const express = require("express");
+//hit up the mentor becaue bcrypt is being a mfer
+const express = require('express');
 const app = express();
 const PORT = 8080;
 const bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser')
+app.use(bodyParser.urlencoded({extended: true}));
+const cookieSession = require('cookie-session');
+app.use(cookieSession({name: 'session', secret: 'i-eat-boogers'}));
+const bcrypt = require('bcrypt');
+app.set('view engine', 'ejs');
+const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers');
 
-app.use(cookieParser())
 
-app.set("view engine", "ejs"); //This tells the Express app to use EJS as its templating engine. 
+const urlDatabase = {};
+const users = {};
 
-app.use(bodyParser.urlencoded({ extended: true }));
-
-function generateRandomString() {
-  Math.random().toString(36).substring(2, 8);
-}
-
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
+// dis is redirecting to urls or da login
+app.get('/', (req, res) => {
+  if (req.session.userID) {
+    res.redirect('/urls');
+  } else {
+    res.redirect('/login');
+  }
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+// make sure that only the user that the urls taht belong to teh person are being seen 
+//test it out more
+app.get('/urls', (req, res) => {
+  const userID = req.session.userID;
+  const userUrls = urlsForUser(userID, urlDatabase);
+  const templateVars = { urls: userUrls, user: users[userID] };
+  
+  if (!userID) {
+    res.statusCode = 401;
+  }
+  
+  res.render('urls_index', templateVars);
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+app.post('/urls', (req, res) => {
+  if (req.session.userID) {
+    const shortURL = generateRandomString();
+    urlDatabase[shortURL] = {
+      longURL: req.body.longURL,
+      userID: req.session.userID
+    };
+    res.redirect(`/urls/${shortURL}`);
+  } else {
+    const errorMessage = 'You must be logged in to do that.';
+    res.status(401).render('urls_error', {user: users[req.session.userID], errorMessage});
+  }
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+// new url creation page - GET
+// validates if the user is logged in before displaying page
+app.get('/urls/new', (req, res) => {
+  if (req.session.userID) {
+    const templateVars = {user: users[req.session.userID]};
+    res.render('urls_new', templateVars);
+  } else {
+    res.redirect('/login');
+  }
 });
 
-app.get("/urls", (req, res) => {
-  //we will try to read the cookie and then set the display of the username.$
-  let templateVars;
-  if(req.cookies){
-    if(req.cookies["username"]){
-      templateVars = {
-        username: req.cookies["username"],
-        urls: urlDatabase
-      
+// short url page - GET
+// shows details about the url if it belongs to user
+app.get('/urls/:shortURL', (req, res) => {
+  const shortURL = req.params.shortURL;
+  const userID = req.session.userID;
+  const userUrls = urlsForUser(userID, urlDatabase);
+  const templateVars = { urlDatabase, userUrls, shortURL, user: users[userID] };
+
+  if (!urlDatabase[shortURL]) {
+    const errorMessage = 'This short URL does not exist.';
+    res.status(404).render('urls_error', {user: users[userID], errorMessage});
+  } else if (!userID || !userUrls[shortURL]) {
+    const errorMessage = 'You are not authorized to see this URL.';
+    res.status(401).render('urls_error', {user: users[userID], errorMessage});
+  } else {
+    res.render('urls_show', templateVars);
+  }
+});
+
+// url edit - POST
+// updates longURL if url belongs to user
+app.post('/urls/:shortURL', (req, res) => {
+  const shortURL = req.params.shortURL;
+
+  if (req.session.userID  && req.session.userID === urlDatabase[shortURL].userID) {
+    urlDatabase[shortURL].longURL = req.body.updatedURL;
+    res.redirect(`/urls`);
+  } else {
+    const errorMessage = 'You are not authorized to do that.';
+    res.status(401).render('urls_error', {user: users[req.session.userID], errorMessage});
+  }
+});
+
+// delete url - POST
+// deletes url from database if it belongs to user
+app.post('/urls/:shortURL/delete', (req, res) => {
+  const shortURL = req.params.shortURL;
+
+  if (req.session.userID  && req.session.userID === urlDatabase[shortURL].userID) {
+    delete urlDatabase[shortURL];
+    res.redirect('/urls');
+  } else {
+    const errorMessage = 'You are not authorized to do that.';
+    res.status(401).render('urls_error', {user: users[req.session.userID], errorMessage});
+  }
+});
+
+// redirecting - GET
+// redirects to the long (actual) url
+app.get('/u/:shortURL', (req, res) => {
+  if (urlDatabase[req.params.shortURL]) {
+    res.redirect(urlDatabase[req.params.shortURL].longURL);
+  } else {
+    const errorMessage = 'This short URL does not exist.';
+    res.status(404).render('urls_error', {user: users[req.session.userID], errorMessage});
+  }
+});
+
+// login page - GET
+// redirects to urls index page if already logged in
+app.get('/login', (req, res) => {
+  if (req.session.userID) {
+    res.redirect('/urls');
+    return;
+  }
+
+  const templateVars = {user: users[req.session.userID]};
+  res.render('urls_login', templateVars);
+});
+
+// logging in - POST
+// redirects to urls index page if credentials are valid
+app.post('/login', (req, res) => {
+  const user = getUserByEmail(req.body.email, users);
+
+  if (user && bcrypt.compareSync(req.body.password, user.password)) {
+    req.session.userID = user.userID;
+    res.redirect('/urls');
+  } else {
+    const errorMessage = 'Login credentials not valid. Please make sure you enter the correct username and password.';
+    res.status(401).render('urls_error', {user: users[req.session.userID], errorMessage});
+  }
+});
+
+// logging out - POST
+// clears cookies and redirects to urls index page
+app.post('/logout', (req, res) => {
+  res.clearCookie('session');
+  res.clearCookie('session.sig');
+  res.redirect('/urls');
+});
+
+// registration page - GET
+// redirects to urls index page if already logged in
+app.get('/register', (req, res) => {
+  if (req.session.userID) {
+    res.redirect('/urls');
+    return;
+  }
+
+  const templateVars = {user: users[req.session.userID]};
+  res.render('urls_registration', templateVars);
+});
+
+// registering - POST
+// redirects to urls index page if credentials are valid
+app.post('/register', (req, res) => {
+  if (req.body.email && req.body.password) {
+
+    if (!getUserByEmail(req.body.email, users)) {
+      const userID = generateRandomString();
+      users[userID] = {
+        userID,
+        email: req.body.email,
+        password: bcrypt.hashSync(req.body.password, 10)
       };
-    } else{
-        templateVars = {
-          username: null,
-          urls: urlDatabase
-        
-        };
+      req.session.userID = userID;
+      res.redirect('/urls');
+    } else {
+      const errorMessage = 'Cannot create new account, because this email address is already registered.';
+      res.status(400).render('urls_error', {user: users[req.session.userID], errorMessage});
     }
-  } else{
-    templateVars = {
-      username: null,
-      urls: urlDatabase
-    }
+
+  } else {
+    const errorMessage = 'Empty username or password. Please make sure you fill out both fields.';
+    res.status(400).render('urls_error', {user: users[req.session.userID], errorMessage});
   }
-  console.log("TEST ");
-  console.log(templateVars);
-  res.render("urls_index", templateVars);
 });
 
-app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+// server listen
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}`);
 });
-
-app.get("/elliott/:parameter", (req, res) => {
-  const text = req.params.parameter 
-  res.send("Hey dude " + text);
-});
-
-//this is doing something with the user's on the registration page
-app.get("/register", (req, res) => {
-  const submittedEmail = req.body.email;
-  const submittedPassword = req.body.password;
-
-  if (submittedEmail || submittedPassword === ""){
-    res.status(400.send("That email and/or password cannot be found");
-  } DO I INCLUDE THE CONDITIONS OF THE PASSWORD/USERNAME BEING IN USE HERE? >_<
-  
-  
-  if(email || password === ""){
-    return with the 400 status code???
-  }
-
-  if const users email already in use return 400 status code
-  code dry? => don't repeat yourself
-
-  const templateVars = {
-    user: null
-  };
-  res.render("register", templateVars);
-});
-
-//this will render the registration page
-app.get("/register", (req, res) => {
-  const templateVars = {username:""}
-  res.render("urls_reg", templateVars);
-});
-
-//res.render => goes through the server file and shows on the brower
-//res.redirect => sends me to anotehr git request
-//get => menu/show something to the user | post => ordering food/gathering data from the user 
-
-app.post("/login", (req, res) => { 
-  console.log("we are in the LOGIN POST");
-  const username = req.body.username;
-  console.log(username);
-  res.cookie("username", username);
-  res.redirect('/urls');
-});
-
-//^^^will always be req,res + look for patterns + "username is the name of the cookie"
-//we need to do a redirect because we need to go somewhere and /urls is the only place we can go
-//
-
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  const longURL = req.body.longURL; 
-
-  urlDatabase[shortURL] = longURL;
-
-  // console.log(req.body);  // Log the POST request body to the console
-  res.redirect(`/urls/${shortURL}`); // Respond with 'Ok' (we will replace this) (redirect requires a string)
-});
-
-app.post('/urls/:shortURL/delete',(req, res)=>{ 
-  delete urlDatabase[req.params.shortURL];
-  res.redirect('/urls');
-});
-
-generateRandomString();
