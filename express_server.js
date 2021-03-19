@@ -1,5 +1,3 @@
-
-//hit up the mentor becaue bcrypt is being a mfer
 const express = require('express');
 const app = express();
 const PORT = 8000;
@@ -12,7 +10,7 @@ app.set('view engine', 'ejs');
 const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers');
 
 
-const urlDatabase = {};
+const urlDatabwase = {};
 const users = {};
 
 // dis is redirecting to urls or da login
