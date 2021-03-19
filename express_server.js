@@ -2,7 +2,7 @@
 //hit up the mentor becaue bcrypt is being a mfer
 const express = require('express');
 const app = express();
-const PORT = 8080;
+const PORT = 8000;
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
 const cookieSession = require('cookie-session');
