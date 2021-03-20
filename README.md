@@ -4,8 +4,10 @@ TinyApp is my first project and was built using a full stack development approac
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+![Alt text](https://github.com/elliottthomlison/TinyApp/blob/main/docs/registrationPage.png?raw=true "Registration Page")
+![Alt text](/relative/path/to/img.jpg?raw=true "Optional Title")
+![Alt text](/relative/path/to/img.jpg?raw=true "Optional Title")
+
 
 ## Dependencies
 
