@@ -4,26 +4,15 @@ const PORT = 8080;
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
 const cookieSession = require('cookie-session');
-app.use(cookieSession({name: 'session', secret: 'i-eat-boogers'}));
+app.use(cookieSession({name: 'session', secret: 'grey-rose-juggling-volcanoes'}));
 const bcrypt = require('bcrypt');
 app.set('view engine', 'ejs');
+
 const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers');
-
-
-const urlDatabwase = {};
+const urlDatabase = {};
 const users = {};
 
-// dis is redirecting to urls or da login
-app.get('/', (req, res) => {
-  if (req.session.userID) {
-    res.redirect('/urls');
-  } else {
-    res.redirect('/login');
-  }
-});
-
-// make sure that only the user that the urls taht belong to teh person are being seen 
-//test it out more
+// shows user's urls
 app.get('/urls', (req, res) => {
   const userID = req.session.userID;
   const userUrls = urlsForUser(userID, urlDatabase);
@@ -36,6 +25,7 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', templateVars);
 });
 
+// adds new url to database & goes to poage
 app.post('/urls', (req, res) => {
   if (req.session.userID) {
     const shortURL = generateRandomString();
@@ -50,8 +40,7 @@ app.post('/urls', (req, res) => {
   }
 });
 
-// new url creation page - GET
-// validates if the user is logged in before displaying page
+// validates the users
 app.get('/urls/new', (req, res) => {
   if (req.session.userID) {
     const templateVars = {user: users[req.session.userID]};
@@ -61,8 +50,7 @@ app.get('/urls/new', (req, res) => {
   }
 });
 
-// short url page - GET
-// shows details about the url if it belongs to user
+// shows details if it is the user's
 app.get('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   const userID = req.session.userID;
@@ -80,8 +68,7 @@ app.get('/urls/:shortURL', (req, res) => {
   }
 });
 
-// url edit - POST
-// updates longURL if url belongs to user
+// updates urls
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
 
@@ -94,8 +81,7 @@ app.post('/urls/:shortURL', (req, res) => {
   }
 });
 
-// delete url - POST
-// deletes url from database if it belongs to user
+// deletes url 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
 
@@ -108,8 +94,16 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   }
 });
 
-// redirecting - GET
-// redirects to the long (actual) url
+// goes to login or login if not
+app.get('/', (req, res) => {
+  if (req.session.userID) {
+    res.redirect('/urls');
+  } else {
+    res.redirect('/login');
+  }
+});
+
+// goes to end result url
 app.get('/u/:shortURL', (req, res) => {
   if (urlDatabase[req.params.shortURL]) {
     res.redirect(urlDatabase[req.params.shortURL].longURL);
@@ -119,7 +113,6 @@ app.get('/u/:shortURL', (req, res) => {
   }
 });
 
-// login page - GET
 // redirects to urls index page if already logged in
 app.get('/login', (req, res) => {
   if (req.session.userID) {
@@ -131,8 +124,7 @@ app.get('/login', (req, res) => {
   res.render('urls_login', templateVars);
 });
 
-// logging in - POST
-// redirects to urls index page if credentials are valid
+// goes to urls index page 
 app.post('/login', (req, res) => {
   const user = getUserByEmail(req.body.email, users);
 
@@ -145,16 +137,14 @@ app.post('/login', (req, res) => {
   }
 });
 
-// logging out - POST
-// clears cookies and redirects to urls index page
+// cookies and redirects to ruls 
 app.post('/logout', (req, res) => {
   res.clearCookie('session');
   res.clearCookie('session.sig');
   res.redirect('/urls');
 });
 
-// registration page - GET
-// redirects to urls index page if already logged in
+// goes to urls if already logged in
 app.get('/register', (req, res) => {
   if (req.session.userID) {
     res.redirect('/urls');
@@ -165,8 +155,7 @@ app.get('/register', (req, res) => {
   res.render('urls_registration', templateVars);
 });
 
-// registering - POST
-// redirects to urls index page if credentials are valid
+// if the creds match redirect tor egister
 app.post('/register', (req, res) => {
   if (req.body.email && req.body.password) {
 
