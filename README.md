@@ -1,23 +1,21 @@
-# TinyApp Project
+# TiniestLittleApp Project
 
-TinyApp is my first project and was built using a full stack development approach, tears, and blood. 
+TiniestLittleApp is the first project made during the Lighthouse Labs Web Development Bootcamp. It is a project that allows one to register, login, and create, delete, and edit miniaturized urls that were created with a randomizer. 
 
 ## Final Product
 
-![Alt text](https://github.com/elliottthomlison/TinyApp/blob/main/docs/registrationPage.png?raw=true "Registration Page")
-![Alt text](https://github.com/elliottthomlison/TinyApp/blob/main/docs/urlsPage.png?raw=true "Optional Title")
-
+!(TiniestLittleApp.gif)
 
 ## Dependencies
 
 - Node.js
 - Express
 - EJS
-- bcrypt
-- body-parser
-- cookie-session
+- BCrypt
+- Body-Parser
+- Cookie-Session
 
 ## Getting Started
 
-- Install all dependencies (using the `npm install` command).
-- Run the development web server using the `node express_server.js` command.
+- Install all dependencies using the `npm install` command
+- Run the development web server using the `node express_server.js` command
