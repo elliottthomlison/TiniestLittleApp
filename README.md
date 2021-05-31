@@ -4,7 +4,7 @@ TiniestLittleApp is the first project made during the Lighthouse Labs Web Develo
 
 ## Final Product
 
-!(TiniestLittleApp.gif)
+![Alt Text](TiniestLittleApp.gif)
 
 ## Dependencies
 
