@@ -11,8 +11,8 @@
   crossorigin="anonymous">
 
   <style>
-    body { 
-      background-color: rgb(138, 200, 219)
+    body {
+     background-color: rgb(138, 200, 219) !important
    }
    h5 {
      color: black;
@@ -50,11 +50,11 @@
             <td><%= url %></td>
             <td><%= urls[url].longURL %></td>
             <td>
-              <a class="btn btn-outline-primary" href="/urls/<%= url %>">Edit</a>
+              <a class="btn btn-primary" href="/urls/<%= url %>">Edit</a>
             </td>
             <td>
               <form method="POST" action="/urls/<%= url %>/delete">
-                <button type="submit" class="btn btn-outline-danger">Delete</button>
+                <button type="submit" class="btn btn-danger">Delete</button>
               </form>
             </td>
           </tr>
